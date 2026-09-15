@@ -72,6 +72,34 @@ rules:
     resources: ["resourcequotas"]
     verbs: ["get", "list", "watch"]
 
+  # The operator's own resources — the namespaced ones.
+  #
+  # Without this block these roles are inverted against their own intent: a
+  # folder member is granted `*` on raw kubevirt.io/VirtualMachine above, so it
+  # can `kubectl apply` a VM that bypasses every convention the operator exists
+  # to enforce, while the ManagedVM the operator reconciles is refused. Filed as
+  # RBAC-3 (no CRD access) and RBAC-4 (bypass from below) in the pilot review.
+  #
+  # ManagedTenant, ManagedNetwork, ManagedUnderlay and AnnouncementPolicy are
+  # deliberately NOT here. They are cluster-scoped, and these roles reach a user
+  # through a namespaced RoleBinding, which cannot grant a cluster-scoped
+  # resource. Listing them would read as a permission that silently never
+  # applies; creating those objects stays a console operation, where the folder
+  # ACL is what authorises it.
+  - apiGroups: ["platform.kubevirt-ui.io"]
+    resources:
+      - managedvms
+      - managedvmoperations
+      - managedimages
+      - managedvmtemplates
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["platform.kubevirt-ui.io"]
+    resources:
+      - managedvms/status
+      - managedvmoperations/status
+      - managedimages/status
+      - managedvmtemplates/status
+    verbs: ["get"]
 ---
 # KubeVirt UI Editor Role - Create/Edit/Delete but no access management
 apiVersion: rbac.authorization.k8s.io/v1
@@ -141,6 +169,34 @@ rules:
     resources: ["resourcequotas"]
     verbs: ["get", "list", "watch"]
 
+  # The operator's own resources — the namespaced ones.
+  #
+  # Without this block these roles are inverted against their own intent: a
+  # folder member is granted `*` on raw kubevirt.io/VirtualMachine above, so it
+  # can `kubectl apply` a VM that bypasses every convention the operator exists
+  # to enforce, while the ManagedVM the operator reconciles is refused. Filed as
+  # RBAC-3 (no CRD access) and RBAC-4 (bypass from below) in the pilot review.
+  #
+  # ManagedTenant, ManagedNetwork, ManagedUnderlay and AnnouncementPolicy are
+  # deliberately NOT here. They are cluster-scoped, and these roles reach a user
+  # through a namespaced RoleBinding, which cannot grant a cluster-scoped
+  # resource. Listing them would read as a permission that silently never
+  # applies; creating those objects stays a console operation, where the folder
+  # ACL is what authorises it.
+  - apiGroups: ["platform.kubevirt-ui.io"]
+    resources:
+      - managedvms
+      - managedvmoperations
+      - managedimages
+      - managedvmtemplates
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["platform.kubevirt-ui.io"]
+    resources:
+      - managedvms/status
+      - managedvmoperations/status
+      - managedimages/status
+      - managedvmtemplates/status
+    verbs: ["get"]
 ---
 # KubeVirt UI Viewer Role - Read only access
 apiVersion: rbac.authorization.k8s.io/v1
@@ -204,6 +260,34 @@ rules:
     resources: ["resourcequotas"]
     verbs: ["get", "list", "watch"]
 
+  # The operator's own resources — the namespaced ones.
+  #
+  # Without this block these roles are inverted against their own intent: a
+  # folder member is granted `*` on raw kubevirt.io/VirtualMachine above, so it
+  # can `kubectl apply` a VM that bypasses every convention the operator exists
+  # to enforce, while the ManagedVM the operator reconciles is refused. Filed as
+  # RBAC-3 (no CRD access) and RBAC-4 (bypass from below) in the pilot review.
+  #
+  # ManagedTenant, ManagedNetwork, ManagedUnderlay and AnnouncementPolicy are
+  # deliberately NOT here. They are cluster-scoped, and these roles reach a user
+  # through a namespaced RoleBinding, which cannot grant a cluster-scoped
+  # resource. Listing them would read as a permission that silently never
+  # applies; creating those objects stays a console operation, where the folder
+  # ACL is what authorises it.
+  - apiGroups: ["platform.kubevirt-ui.io"]
+    resources:
+      - managedvms
+      - managedvmoperations
+      - managedimages
+      - managedvmtemplates
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["platform.kubevirt-ui.io"]
+    resources:
+      - managedvms/status
+      - managedvmoperations/status
+      - managedimages/status
+      - managedvmtemplates/status
+    verbs: ["get"]
 ---
 # Platform Admin ClusterRole - for managing projects and users
 apiVersion: rbac.authorization.k8s.io/v1
