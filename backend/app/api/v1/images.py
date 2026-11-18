@@ -108,14 +108,7 @@ async def _resolve_folder_ancestors(k8s_client, folder_name: str) -> list[str]:
     return chain
 
 
-async def _shared_data_sources(
-    custom_api: Any, namespace: str, image_usage: dict[str, list[str]],
-) -> list[GoldenImage]:
-    """DataSources in a shared namespace, as images.
-
-    A DataImportCron keeps one DataSource pointing at its latest import, whose
-    DataVolume name changes with every import; the DataSource is the stable name.
-    """
+async def _list_data_sources(custom_api: Any, namespace: str) -> list[dict[str, Any]]:
     try:
         result = await custom_api.list_namespaced_custom_object(
             group="cdi.kubevirt.io", version="v1beta1",
@@ -124,9 +117,28 @@ async def _shared_data_sources(
     except ApiException as e:
         logger.warning(f"Failed to list DataSources in {namespace}: {e}")
         return []
+    return result.get("items", [])
 
+
+def _data_source_target(ds: dict[str, Any], namespace: str) -> tuple[str, str]:
+    pvc = ds.get("spec", {}).get("source", {}).get("pvc") or {}
+    return pvc.get("namespace", namespace), pvc.get("name", "")
+
+
+def _data_source_images(
+    namespace: str,
+    sources: list[dict[str, Any]],
+    image_usage: dict[str, list[str]],
+    sizes: dict[tuple[str, str], str],
+) -> list[GoldenImage]:
+    """DataSources in a shared namespace, as images.
+
+    A DataSource is the stable name for an image whose volume is replaced on
+    update (a DataImportCron's imports, or a versioned DataVolume), so the image
+    is listed under the DataSource with the size of the volume it points at.
+    """
     rows = []
-    for ds in result.get("items", []):
+    for ds in sources:
         metadata = ds.get("metadata", {})
         annotations = metadata.get("annotations", {})
         labels = metadata.get("labels", {})
@@ -143,6 +155,7 @@ async def _shared_data_sources(
             description=annotations.get("kubevirt-ui.io/description"),
             os_type=labels.get("kubevirt-ui.io/os-type"),
             os_version=labels.get("kubevirt-ui.io/os-version"),
+            size=sizes.get(_data_source_target(ds, namespace)),
             status=("InUse" if used_by else "Ready") if ready else "Pending",
             source_url=f"datasource:{namespace}/{name}",
             created=metadata.get("creationTimestamp"),
@@ -239,6 +252,13 @@ async def list_golden_images(
         return GoldenImageListResponse(items=[], total=0, catalog_available=False)
     
     try:
+        shared_sources = {ns: await _list_data_sources(custom_api, ns) for ns in sorted(shared)}
+        # Volumes a DataSource points at are listed under the DataSource.
+        behind_a_source = {
+            _data_source_target(ds, ns) for ns, items in shared_sources.items() for ds in items
+        }
+        source_sizes: dict[tuple[str, str], str] = {}
+
         # Pre-fetch namespace labels for project/environment resolution
         ns_labels_map: dict[str, dict[str, str]] = {}
         for ns in namespaces_to_check:
@@ -391,6 +411,9 @@ async def list_golden_images(
                     # Get size from PVC spec
                     pvc_spec = spec.get("pvc", spec.get("storage", {}))
                     size = pvc_spec.get("resources", {}).get("requests", {}).get("storage", "Unknown")
+                    if (dv_ns, dv_name) in behind_a_source:
+                        source_sizes[(dv_ns, dv_name)] = size
+                        continue
                     
                     # Determine status: Pending, Ready, Error, or InUse
                     phase = status_obj.get("phase", "Unknown")
@@ -478,8 +501,8 @@ async def list_golden_images(
                 logger.warning(f"Failed to list DataVolumes in {ns}: {e}")
                 continue
 
-        for ns in sorted(shared):
-            images.extend(await _shared_data_sources(custom_api, ns, image_usage))
+        for ns, items in shared_sources.items():
+            images.extend(_data_source_images(ns, items, image_usage, source_sizes))
         
         # And the ones that were asked for but not built.
         #
