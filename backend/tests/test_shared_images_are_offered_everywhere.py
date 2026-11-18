@@ -56,7 +56,10 @@ def _shared(*namespaces: str):
 def _dv(name: str, namespace: str, labels: dict[str, str] | None = None) -> dict[str, Any]:
     return {
         "metadata": {"name": name, "namespace": namespace, "labels": labels or {}},
-        "spec": {"source": {"http": {"url": "https://example.test/x.qcow2"}}},
+        "spec": {
+            "source": {"http": {"url": "https://example.test/x.qcow2"}},
+            "storage": {"resources": {"requests": {"storage": "5Gi"}}},
+        },
         "status": {"phase": "Succeeded"},
     }
 
@@ -66,9 +69,11 @@ CLUSTER: dict[tuple[str, str], list[dict[str, Any]]] = {
     (SHARED, "datavolumes"): [
         _dv("debian-13", SHARED),
         _dv("nixos-5e6cc80ca174", SHARED, {"cdi.kubevirt.io/dataImportCron": "nixos"}),
+        _dv("nixos-2026.11.18.0832", SHARED),
     ],
     (SHARED, "datasources"): [{
         "metadata": {"name": "nixos", "namespace": SHARED},
+        "spec": {"source": {"pvc": {"name": "nixos-2026.11.18.0832", "namespace": SHARED}}},
         "status": {"conditions": [{"type": "Ready", "status": "True"}]},
     }],
 }
@@ -80,7 +85,7 @@ async def _list(**kwargs: Any) -> dict[str, Any]:
     return {"items": CLUSTER.get((kwargs["namespace"], kwargs["plural"]), [])}
 
 
-async def _images(namespace: str | None = None, shared: tuple[str, ...] = (SHARED,)):
+async def _rows(namespace: str | None = None, shared: tuple[str, ...] = (SHARED,)):
     request = MagicMock()
     request.app.state.k8s_client = _k8s()
     api = MagicMock()
@@ -89,7 +94,11 @@ async def _images(namespace: str | None = None, shared: tuple[str, ...] = (SHARE
         images.client, "CustomObjectsApi", return_value=api,
     ):
         got = await images.list_golden_images(request=request, user=_user(), namespace=namespace)
-    return {(i.namespace, i.name): i.shared for i in got.items}
+    return got.items
+
+
+async def _images(namespace: str | None = None, shared: tuple[str, ...] = (SHARED,)):
+    return {(i.namespace, i.name): i.shared for i in await _rows(namespace, shared)}
 
 
 @pytest.mark.asyncio
@@ -105,6 +114,13 @@ class TestTheImageList:
     async def test_a_data_import_crons_versioned_volume_is_not_listed(self) -> None:
         """Its name changes with every import; the DataSource is the stable one."""
         assert (SHARED, "nixos-5e6cc80ca174") not in await _images()
+
+    async def test_the_volume_behind_a_data_source_is_listed_under_it(self) -> None:
+        """A versioned DataVolume (`nixos-<tag>`) behind the DataSource `nixos`
+        is one image, not two, and the DataSource carries its size."""
+        rows = {(i.namespace, i.name): i for i in await _rows()}
+        assert (SHARED, "nixos-2026.11.18.0832") not in rows
+        assert rows[(SHARED, "nixos")].size == "5Gi"
 
     async def test_nothing_is_shared_unless_configured(self) -> None:
         assert await _images(shared=()) == {(MINE, "own-image"): False}
