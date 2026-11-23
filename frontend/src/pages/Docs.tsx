@@ -2,12 +2,13 @@ import { useState, type ComponentPropsWithoutRef } from 'react';
 import { Link, Navigate, NavLink, useParams } from 'react-router-dom';
 import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { BookOpen, Check, Copy, Loader2 } from 'lucide-react';
+import { AlertTriangle, BookOpen, Check, Copy, Info, Lightbulb, Loader2, MessageSquareWarning, OctagonAlert } from 'lucide-react';
 import clsx from 'clsx';
 import { useDocs } from '../hooks/useDocs';
 import { PageTitle } from '@/components/common/PageTitle';
 import { useBreadcrumbOverride } from '@/contexts/BreadcrumbContext';
 import { docsHref } from '../utils/docsHref';
+import remarkAlerts, { type AlertType } from '../utils/remarkAlerts';
 
 function DocLink({ href = '', children, node: _node, ...rest }: ComponentPropsWithoutRef<'a'> & { node?: unknown }) {
   const internal = docsHref(href);
@@ -44,7 +45,31 @@ function CodeBlock({ children, node: _node, ...rest }: ComponentPropsWithoutRef<
   );
 }
 
-const components: Components = { a: DocLink, pre: CodeBlock };
+const ALERTS: Record<AlertType, { label: string; icon: typeof Info; className: string }> = {
+  note: { label: 'Note', icon: Info, className: 'border-blue-500 bg-blue-500/10 text-blue-400' },
+  tip: { label: 'Tip', icon: Lightbulb, className: 'border-green-500 bg-green-500/10 text-green-400' },
+  important: { label: 'Important', icon: MessageSquareWarning, className: 'border-purple-500 bg-purple-500/10 text-purple-400' },
+  warning: { label: 'Warning', icon: AlertTriangle, className: 'border-amber-500 bg-amber-500/10 text-amber-400' },
+  caution: { label: 'Caution', icon: OctagonAlert, className: 'border-red-500 bg-red-500/10 text-red-400' },
+};
+
+function Blockquote({ children, node: _node, ...rest }: ComponentPropsWithoutRef<'blockquote'> & { node?: unknown; 'data-alert'?: AlertType }) {
+  const alert = rest['data-alert'] && ALERTS[rest['data-alert']];
+  if (!alert) return <blockquote {...rest}>{children}</blockquote>;
+  return (
+    <div className={clsx('not-prose my-5 rounded-r-lg border-l-4 px-4 py-3', alert.className)}>
+      <p className="flex items-center gap-2 text-sm font-semibold">
+        <alert.icon className="h-4 w-4" />
+        {alert.label}
+      </p>
+      <div className="mt-1 text-sm text-gray-800 dark:text-surface-200 [&_a]:text-primary-400 [&_a]:underline [&_code]:rounded [&_code]:bg-surface-800/70 [&_code]:px-1.5 [&_code]:py-0.5 [&_p]:my-1">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+const components: Components = { a: DocLink, pre: CodeBlock, blockquote: Blockquote };
 
 export default function Docs() {
   const { slug } = useParams();
@@ -105,7 +130,7 @@ export default function Docs() {
           ))}
         </nav>
         <article className="card p-6 sm:p-8 w-full min-w-0 prose prose-sm sm:prose-base dark:prose-invert max-w-none prose-pre:bg-surface-950 prose-pre:border prose-pre:border-surface-700/50 prose-a:text-primary-400 prose-code:before:content-none prose-code:after:content-none prose-code:font-normal prose-code:rounded prose-code:bg-surface-800/70 prose-code:px-1.5 prose-code:py-0.5 [&_pre_code]:bg-transparent [&_pre_code]:p-0">
-          <Markdown remarkPlugins={[remarkGfm]} components={components}>
+          <Markdown remarkPlugins={[remarkGfm, remarkAlerts]} components={components}>
             {page.content}
           </Markdown>
         </article>
