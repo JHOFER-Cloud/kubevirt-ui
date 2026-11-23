@@ -31,6 +31,7 @@ vi.mock('@/store', () => ({
 vi.mock('@/hooks/useFolders', () => ({
   useFoldersFlat: () => ({ data: { items: [] } }),
 }));
+vi.mock('@/hooks/useProfile', () => ({ useProfile: () => ({ data: { ssh_public_keys: [] } }) }));
 
 vi.mock('@/hooks/usePagination', () => ({
   usePagination: () => ({ page: 1, perPage: 50, setPage: vi.fn(), setPerPage: vi.fn() }),

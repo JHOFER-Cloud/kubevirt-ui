@@ -15,6 +15,7 @@ import { CustomSelect } from '@/components/common/CustomSelect';
 import { WizardStepIndicator } from '@/components/common/WizardStepIndicator';
 import { SSHKeyPicker } from '@/components/vm/SSHKeyPicker';
 import { useFoldersFlat } from '@/hooks/useFolders';
+import { useProfile } from '@/hooks/useProfile';
 import type { Folder as FolderType } from '@/types/folder';
 
 interface Project {
@@ -158,6 +159,11 @@ export function CreateVMWizard({ projects, defaultProject, defaultTemplate, defa
   // own class: templates live on the cheap tier, VM disks should not.
   const [storageClass, setStorageClass] = useState<string>('');
   const [sshKey, setSshKey] = useState('');
+  const profileKeyCount = useProfile().data?.ssh_public_keys.length ?? 0;
+  const sshKeySummary = [
+    profileKeyCount && `${profileKeyCount} from Profile`,
+    sshKey && '1 extra',
+  ].filter(Boolean).join(' + ') || 'None';
   const [password, setPassword] = useState('');
   const [startVM, setStartVM] = useState(true);
   // Network — multi-NIC support
@@ -827,8 +833,8 @@ export function CreateVMWizard({ projects, defaultProject, defaultTemplate, defa
             <span className="text-surface-100">{diskSize}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-surface-400">SSH Key</span>
-            <span className="text-surface-100">{sshKey ? 'Configured' : 'Not set'}</span>
+            <span className="text-surface-400">SSH Keys</span>
+            <span className="text-surface-100">{sshKeySummary}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-surface-400">Password</span>
