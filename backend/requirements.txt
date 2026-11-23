@@ -5,7 +5,7 @@ pydantic==2.10.4
 pydantic-settings==2.7.1
 
 # Kubernetes
-kubernetes-asyncio==31.1.0
+kubernetes-asyncio==31.1.1
 
 # HTTP client
 httpx==0.28.1
