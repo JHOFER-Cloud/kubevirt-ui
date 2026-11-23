@@ -9,6 +9,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.cluster import router as cluster_router
 from app.api.v1.users import users_router, groups_router
 from app.api.v1.disks import router as disks_router, snapshots_router
+from app.api.v1.docs import router as docs_router
 from app.api.v1.namespaces import router as namespaces_router
 from app.api.v1.network import router as network_router
 from app.api.v1.vpc_underlay import router as vpc_underlay_router
@@ -69,6 +70,7 @@ protected = APIRouter(dependencies=[Depends(require_auth)])
 router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 protected.include_router(metrics_router, prefix="/metrics", tags=["Metrics"])
 protected.include_router(profile_router, prefix="/profile", tags=["Profile"])
+protected.include_router(docs_router, prefix="/docs", tags=["Docs"])
 protected.include_router(folders_router, prefix="/folders", tags=["Folders"])
 protected.include_router(projects_router, prefix="/projects", tags=["Projects"])
 

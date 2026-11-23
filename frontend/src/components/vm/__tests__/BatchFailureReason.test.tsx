@@ -26,6 +26,7 @@ vi.mock('@/hooks/useVpcs', () => ({ useVpcs: () => ({ data: { items: [] } }) }))
 vi.mock('@/hooks/useNetwork', () => ({ useSubnets: () => ({ data: [] }) }));
 vi.mock('@/hooks/useStorage', () => ({ useStorageClasses: () => ({ data: { items: [] } }) }));
 vi.mock('@/hooks/useFolders', () => ({ useFoldersFlat: () => ({ data: { items: [] } }) }));
+vi.mock('@/hooks/useProfile', () => ({ useProfile: () => ({ data: { ssh_public_keys: [] } }) }));
 vi.mock('@/components/vm/SSHKeyPicker', () => ({ SSHKeyPicker: () => null }));
 
 const template = {

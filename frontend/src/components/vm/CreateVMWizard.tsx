@@ -15,6 +15,7 @@ import { CustomSelect } from '@/components/common/CustomSelect';
 import { WizardStepIndicator } from '@/components/common/WizardStepIndicator';
 import { SSHKeyPicker } from '@/components/vm/SSHKeyPicker';
 import { useFoldersFlat } from '@/hooks/useFolders';
+import { useProfile } from '@/hooks/useProfile';
 import type { Folder as FolderType } from '@/types/folder';
 
 interface Project {
@@ -130,7 +131,7 @@ function FolderQuotaWarning({ folder }: { folder: FolderType }) {
 export function CreateVMWizard({ projects, defaultProject, defaultTemplate, defaultFolderName, onClose, onSuccess }: CreateVMWizardProps) {
   const [step, setStep] = useState<WizardStep>(defaultTemplate ? 'customize' : 'template');
   const [selectedTemplate, setSelectedTemplate] = useState<VMTemplate | null>(defaultTemplate || null);
-  const [selectedProject, setSelectedProject] = useState(defaultTemplate?.golden_image_namespace || defaultProject || '');
+  const [selectedProject, setSelectedProject] = useState(defaultProject || defaultTemplate?.golden_image_namespace || '');
   const [selectedFolderName, setSelectedFolderName] = useState(defaultFolderName ?? '');
 
   const { data: foldersData } = useFoldersFlat();
@@ -158,6 +159,11 @@ export function CreateVMWizard({ projects, defaultProject, defaultTemplate, defa
   // own class: templates live on the cheap tier, VM disks should not.
   const [storageClass, setStorageClass] = useState<string>('');
   const [sshKey, setSshKey] = useState('');
+  const profileKeyCount = useProfile().data?.ssh_public_keys.length ?? 0;
+  const sshKeySummary = [
+    profileKeyCount && `${profileKeyCount} from Profile`,
+    sshKey && '1 extra',
+  ].filter(Boolean).join(' + ') || 'None';
   const [password, setPassword] = useState('');
   const [startVM, setStartVM] = useState(true);
   // Network — multi-NIC support
@@ -176,15 +182,10 @@ export function CreateVMWizard({ projects, defaultProject, defaultTemplate, defa
   const templates = templatesData?.items || [];
   const goldenImages = goldenImagesData?.items || [];
   
-  // Filter templates by selected project (templates can only use images from the same namespace)
-  // And check if the golden image exists in that project
-  const projectImages = goldenImages.filter(img => img.namespace === selectedProject);
-  const projectImageNames = new Set(projectImages.map(img => img.name));
-  
-  // Templates from the selected project that have valid images
-  const availableTemplates = templates.filter(t => 
-    t.golden_image_namespace === selectedProject && 
-    projectImageNames.has(t.golden_image_name)
+  // Templates whose image exists in the selected project or in a shared image namespace
+  const projectImages = goldenImages.filter(img => img.namespace === selectedProject || img.shared);
+  const availableTemplates = templates.filter(t =>
+    projectImages.some(img => img.namespace === t.golden_image_namespace && img.name === t.golden_image_name)
   );
   
   // Generate display names based on pattern and count
@@ -832,8 +833,8 @@ export function CreateVMWizard({ projects, defaultProject, defaultTemplate, defa
             <span className="text-surface-100">{diskSize}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-surface-400">SSH Key</span>
-            <span className="text-surface-100">{sshKey ? 'Configured' : 'Not set'}</span>
+            <span className="text-surface-400">SSH Keys</span>
+            <span className="text-surface-100">{sshKeySummary}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-surface-400">Password</span>
