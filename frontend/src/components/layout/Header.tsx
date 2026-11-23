@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { User, LogOut, ChevronDown, Menu } from 'lucide-react';
 import { useNamespaces } from '@/hooks/useNamespaces';
 import { useFoldersFlat } from '@/hooks/useFolders';
+import { useAppName } from '@/hooks/useFeatures';
 import { useAppStore } from '@/store';
 import { useAuthStore } from '@/store/auth';
 import { CustomSelect } from '@/components/common/CustomSelect';
@@ -50,7 +51,8 @@ export function Header() {
     });
   }
 
-  const pageTitle = pageTitles[location.pathname] ?? 'KubeVirt UI';
+  const appName = useAppName();
+  const pageTitle = pageTitles[location.pathname] ?? appName;
 
   // Close menu when clicking outside
   useEffect(() => {

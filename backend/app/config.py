@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     # Feature flags
     enable_tenants: bool = False
 
+    # Name shown in the UI (sidebar, login page, browser tab)
+    app_name: str = "KubeVirt UI"
+
+    # Off where users may not get a ServiceAccount (and so no kubeconfig)
+    cli_access_enabled: bool = True
+
     # Auth — comma-separated list of group names whose members are KubeVirt UI
     # admins (full cluster-wide access). Set this via ADMIN_GROUPS env var to
     # match the names of groups returned by your IdP (e.g. "admins" for FreeIPA

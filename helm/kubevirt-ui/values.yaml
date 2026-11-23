@@ -29,6 +29,12 @@ backend:
     LOG_LEVEL: INFO
     CORS_ORIGINS: ""
     ENABLE_TENANTS: "false"
+    # -- Name shown in the sidebar, on the login page and in the browser tab.
+    # Empty → "KubeVirt UI".
+    APP_NAME: ""
+    # -- Show CLI Access (per-user ServiceAccount kubeconfigs). Set "false" when
+    # the backend may not create ServiceAccounts or users should not reach the API.
+    CLI_ACCESS_ENABLED: "true"
     # -- Route golden-image creation through the operator: the backend writes a
     # ManagedImage custom resource and the operator creates the DataVolume, the
     # DataSource and the status. Empty/false → the backend creates the

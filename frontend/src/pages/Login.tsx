@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Monitor, LogIn, Key, Loader2, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
+import { useAppName } from '../hooks/useFeatures';
 import { getAuthConfig, buildAuthorizationUrl, getCurrentUser } from '../api/auth';
 
 export function Login() {
   const navigate = useNavigate();
+  const appName = useAppName();
   const { config, setConfig, setTokens, setUser, setLoading, isAuthenticated, accessToken } =
     useAuthStore();
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +99,7 @@ export function Login() {
               <Monitor className="h-12 w-12 text-primary-400" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-surface-100 mb-4">KubeVirt UI</h1>
+          <h1 className="text-4xl font-bold text-surface-100 mb-4">{appName}</h1>
           <p className="text-lg text-surface-400">
             Manage virtual machines on Kubernetes with a modern, intuitive interface.
           </p>
@@ -125,7 +127,7 @@ export function Login() {
             <div className="p-2 bg-primary-500/20 rounded-xl">
               <Monitor className="h-8 w-8 text-primary-400" />
             </div>
-            <h1 className="text-2xl font-bold text-surface-100">KubeVirt UI</h1>
+            <h1 className="text-2xl font-bold text-surface-100">{appName}</h1>
           </div>
 
           <div className="card">

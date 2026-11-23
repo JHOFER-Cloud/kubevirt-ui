@@ -476,8 +476,12 @@ async def get_kubeconfig(
     Optional OIDC variants: only when K8S_OIDC_ENABLED=true (requires API server OIDC config).
     """
     import yaml
+    from app.config import get_settings
     from app.core.auth import AUTH_TYPE
     from app.core.kube_api_url import discover_external_api_url
+
+    if not get_settings().cli_access_enabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="CLI access is disabled")
 
     k8s_client = request.app.state.k8s_client
 

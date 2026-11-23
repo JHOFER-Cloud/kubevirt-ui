@@ -50,6 +50,8 @@ async def get_features():
     return {
         "enableTenants": settings.enable_tenants,
         "enableHarborImages": harbor_image_path_enabled(),
+        "appName": settings.app_name,
+        "cliAccess": settings.cli_access_enabled,
     }
 
 
