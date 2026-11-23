@@ -39,6 +39,7 @@ const Users = lazy(() => import('./pages/Users'));
 const Groups = lazy(() => import('./pages/Groups'));
 const Profile = lazy(() => import('./pages/Profile'));
 const CLIAccess = lazy(() => import('./pages/CLIAccess'));
+const Docs = lazy(() => import('./pages/Docs'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const AccessDenied = lazy(() => import('./pages/AccessDenied'));
 
@@ -254,6 +255,8 @@ function AppRoutes() {
                     <Route path="/users/groups" element={<RequireAdmin><Groups /></RequireAdmin>} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/cli-access" element={<CLIAccess />} />
+                    <Route path="/docs" element={<Docs />} />
+                    <Route path="/docs/:slug" element={<Docs />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
