@@ -7,7 +7,7 @@ import { Notifications } from './components/common/Notifications';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { useAuthStore } from './store/auth';
 import { getAuthConfig, getCurrentUser } from './api/auth';
-import { useFeatures } from './hooks/useFeatures';
+import { useAppName, useFeatures } from './hooks/useFeatures';
 import { Loader2 } from 'lucide-react';
 
 const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -160,6 +160,11 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   const { data: features, isLoading: featuresLoading } = useFeatures();
+  const appName = useAppName();
+
+  useEffect(() => {
+    document.title = appName;
+  }, [appName]);
 
   return (
     <Routes>

@@ -30,7 +30,7 @@ import {
 import clsx from 'clsx';
 import { FolderTree } from '../folders/FolderTree';
 import { useFoldersTree } from '../../hooks/useFolders';
-import { useFeatures } from '../../hooks/useFeatures';
+import { DEFAULT_APP_NAME, useAppName, useFeatures } from '../../hooks/useFeatures';
 import { useDocs } from '../../hooks/useDocs';
 import { useAuthStore } from '../../store/auth';
 
@@ -288,6 +288,7 @@ function filterNav(items: NavItem[], isAdmin: boolean, lldapEnabled: boolean): N
 export function Sidebar() {
   const { data: features } = useFeatures();
   const { data: docs } = useDocs();
+  const appName = useAppName();
   const { user, config } = useAuthStore();
   // Treat "no auth" mode as admin so dev environments see everything
   const isAdmin = config?.type === 'none' || (user?.is_admin ?? false);
@@ -368,10 +369,18 @@ export function Sidebar() {
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <h1 className="font-display text-lg font-bold text-surface-100 truncate">
-                KubeVirt
-              </h1>
-              <p className="text-xs text-surface-500">UI Console</p>
+              {appName === DEFAULT_APP_NAME ? (
+                <>
+                  <h1 className="font-display text-lg font-bold text-surface-100 truncate">
+                    KubeVirt
+                  </h1>
+                  <p className="text-xs text-surface-500">UI Console</p>
+                </>
+              ) : (
+                <h1 className="font-display text-lg font-bold text-surface-100 truncate">
+                  {appName}
+                </h1>
+              )}
             </div>
           )}
           <button
