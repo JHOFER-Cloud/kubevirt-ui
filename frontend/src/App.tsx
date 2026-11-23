@@ -259,7 +259,7 @@ function AppRoutes() {
                     <Route path="/users" element={<RequireAdmin><Users /></RequireAdmin>} />
                     <Route path="/users/groups" element={<RequireAdmin><Groups /></RequireAdmin>} />
                     <Route path="/profile" element={<Profile />} />
-                    <Route path="/cli-access" element={<CLIAccess />} />
+                    <Route path="/cli-access" element={featuresLoading ? null : features?.cliAccess === false ? <Navigate to="/dashboard" replace /> : <CLIAccess />} />
                     <Route path="/docs" element={<Docs />} />
                     <Route path="/docs/:slug" element={<Docs />} />
                     <Route path="*" element={<NotFound />} />

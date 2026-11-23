@@ -3,6 +3,7 @@ import { apiRequest } from './client';
 export interface Features {
   enableTenants: boolean;
   appName?: string;
+  cliAccess?: boolean;
 }
 
 export function getFeatures(): Promise<Features> {

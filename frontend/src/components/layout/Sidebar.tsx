@@ -440,16 +440,18 @@ export function Sidebar() {
             <User className="h-4.5 w-4.5 shrink-0" />
             {!collapsed && <span>Profile</span>}
           </NavLink>
-          <NavLink
-            to="/cli-access"
-            title={collapsed ? 'CLI Access' : undefined}
-            className={({ isActive }) =>
-              clsx('sidebar-link', collapsed && 'justify-center', isActive && 'active')
-            }
-          >
-            <Terminal className="h-4.5 w-4.5 shrink-0" />
-            {!collapsed && <span>CLI Access</span>}
-          </NavLink>
+          {features?.cliAccess !== false && (
+            <NavLink
+              to="/cli-access"
+              title={collapsed ? 'CLI Access' : undefined}
+              className={({ isActive }) =>
+                clsx('sidebar-link', collapsed && 'justify-center', isActive && 'active')
+              }
+            >
+              <Terminal className="h-4.5 w-4.5 shrink-0" />
+              {!collapsed && <span>CLI Access</span>}
+            </NavLink>
+          )}
           {(docs?.pages.length ?? 0) > 0 && (
             <NavLink
               to="/docs"
