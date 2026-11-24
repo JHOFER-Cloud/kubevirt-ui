@@ -187,7 +187,7 @@ services:
   # internally-reachable issuer, which a single dex instance's config
   # does not support).
   harbor-init:
-    image: curlimages/curl:8.11.0
+    image: curlimages/curl:8.23.0
     depends_on:
       - harbor-core
     networks:
