@@ -5,10 +5,11 @@ import { PublishTab, hostAllowed } from '../PublishTab';
 import type { PublishedResponse } from '@/api/publish';
 
 const mutate = vi.fn();
-let data: PublishedResponse;
+let data: PublishedResponse | undefined;
+let error: Error | null = null;
 
 vi.mock('@/hooks/usePublish', () => ({
-  usePublished: () => ({ data, isLoading: false }),
+  usePublished: () => ({ data, error, isLoading: false }),
   usePublish: () => ({ mutate, isPending: false, error: null }),
   useUnpublish: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }));
@@ -18,7 +19,15 @@ const vm = { namespace: 'vm-tenant2', name: 'web' };
 describe('PublishTab', () => {
   beforeEach(() => {
     mutate.mockReset();
+    error = null;
     data = { allowed_domains: ['example.com'], dns_target: 'gw.example.net', hosts: [] };
+  });
+
+  it('shows a failed load instead of spinning', () => {
+    data = undefined;
+    error = new Error('Forbidden');
+    render(<PublishTab vm={vm} />);
+    expect(screen.getByText(/Could not load published hosts: Forbidden/)).toBeInTheDocument();
   });
 
   it('matches allowed domains at a dot', () => {
@@ -28,7 +37,7 @@ describe('PublishTab', () => {
   });
 
   it('says publishing is off when no domain is allowed', () => {
-    data = { ...data, allowed_domains: [] };
+    data = { ...data!, allowed_domains: [] };
     render(<PublishTab vm={vm} />);
     expect(screen.getByText(/not enabled for this folder/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Publish/ })).not.toBeInTheDocument();
@@ -66,7 +75,7 @@ describe('PublishTab', () => {
 
   it('lists published hosts with their certificate state', () => {
     data = {
-      ...data,
+      ...data!,
       hosts: [
         { name: 'web-www', host: 'www.example.com', port: 80, protocol: 'http', certificate: 'Pending', message: null },
       ],

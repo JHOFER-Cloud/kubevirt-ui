@@ -33,13 +33,21 @@ function CertificateBadge({ host }: { host: PublishedHost }) {
 }
 
 export function PublishTab({ vm }: { vm: { namespace: string; name: string } }) {
-  const { data, isLoading } = usePublished(vm.namespace, vm.name);
+  const { data, isLoading, error } = usePublished(vm.namespace, vm.name);
   const publish = usePublish(vm.namespace, vm.name);
   const unpublish = useUnpublish(vm.namespace, vm.name);
   const [host, setHost] = useState('');
   const [port, setPort] = useState('80');
   const [protocol, setProtocol] = useState<'http' | 'https'>('http');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  if (error) {
+    return (
+      <div className="card p-4">
+        <p className="text-red-400 text-sm">Could not load published hosts: {error.message}</p>
+      </div>
+    );
+  }
 
   if (isLoading || !data) {
     return (
