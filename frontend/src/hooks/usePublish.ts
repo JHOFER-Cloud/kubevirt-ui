@@ -17,7 +17,7 @@ export function usePublished(namespace: string, vm: string) {
 export function usePublish(namespace: string, vm: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { host: string; port: number }) => publishApi.publish(namespace, vm, data),
+    mutationFn: (data: { host: string; port: number; protocol: 'http' | 'https' }) => publishApi.publish(namespace, vm, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: key(namespace, vm) }),
   });
 }

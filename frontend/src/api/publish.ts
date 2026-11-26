@@ -4,6 +4,7 @@ export interface PublishedHost {
   name: string;
   host: string;
   port: number;
+  protocol: 'http' | 'https';
   certificate: 'Ready' | 'Pending' | 'Failed' | 'Unknown';
   message: string | null;
 }
@@ -20,7 +21,7 @@ export function listPublished(namespace: string, vm: string): Promise<PublishedR
   return apiRequest<PublishedResponse>(base(namespace, vm));
 }
 
-export function publish(namespace: string, vm: string, data: { host: string; port: number }): Promise<PublishedHost> {
+export function publish(namespace: string, vm: string, data: { host: string; port: number; protocol: 'http' | 'https' }): Promise<PublishedHost> {
   return apiRequest<PublishedHost>(base(namespace, vm), { method: 'POST', body: data });
 }
 

@@ -1,24 +1,14 @@
-import { useState } from "react";
-import {
-  Globe,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  Trash2,
-  Check,
-  X,
-  ExternalLink,
-  Info,
-} from "lucide-react";
-import { usePublished, usePublish, useUnpublish } from "@/hooks/usePublish";
-import type { PublishedHost } from "@/api/publish";
+import { useState } from 'react';
+import { Globe, Loader2, CheckCircle, XCircle, Trash2, Check, X, ExternalLink, Info } from 'lucide-react';
+import { usePublished, usePublish, useUnpublish } from '@/hooks/usePublish';
+import type { PublishedHost } from '@/api/publish';
 
 export function hostAllowed(host: string, domains: string[]): boolean {
   return domains.some((d) => host === d || host.endsWith(`.${d}`));
 }
 
 function CertificateBadge({ host }: { host: PublishedHost }) {
-  if (host.certificate === "Ready") {
+  if (host.certificate === 'Ready') {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400">
         <CheckCircle className="h-3 w-3" />
@@ -26,7 +16,7 @@ function CertificateBadge({ host }: { host: PublishedHost }) {
       </span>
     );
   }
-  if (host.certificate === "Failed") {
+  if (host.certificate === 'Failed') {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-red-500/10 text-red-400">
         <XCircle className="h-3 w-3" />
@@ -42,16 +32,13 @@ function CertificateBadge({ host }: { host: PublishedHost }) {
   );
 }
 
-export function PublishTab({
-  vm,
-}: {
-  vm: { namespace: string; name: string };
-}) {
+export function PublishTab({ vm }: { vm: { namespace: string; name: string } }) {
   const { data, isLoading } = usePublished(vm.namespace, vm.name);
   const publish = usePublish(vm.namespace, vm.name);
   const unpublish = useUnpublish(vm.namespace, vm.name);
-  const [host, setHost] = useState("");
-  const [port, setPort] = useState("80");
+  const [host, setHost] = useState('');
+  const [port, setPort] = useState('80');
+  const [protocol, setProtocol] = useState<'http' | 'https'>('http');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   if (isLoading || !data) {
@@ -63,43 +50,33 @@ export function PublishTab({
   }
 
   const domains = data.allowed_domains;
-  const cleanHost = host.trim().toLowerCase().replace(/\.$/, "");
+  const cleanHost = host.trim().toLowerCase().replace(/\.$/, '');
   const portNumber = Number(port);
-  const portValid =
-    Number.isInteger(portNumber) && portNumber >= 1 && portNumber <= 65535;
+  const portValid = Number.isInteger(portNumber) && portNumber >= 1 && portNumber <= 65535;
   const hostError =
-    cleanHost && !hostAllowed(cleanHost, domains)
-      ? `Not allowed: use ${domains.join(", ")} or a subdomain`
-      : "";
-  const canPublish =
-    !!cleanHost && !hostError && portValid && !publish.isPending;
+    cleanHost && !hostAllowed(cleanHost, domains) ? `Not allowed: use ${domains.join(', ')} or a subdomain` : '';
+  const canPublish = !!cleanHost && !hostError && portValid && !publish.isPending;
 
   const handlePublish = () => {
     if (!canPublish) return;
-    publish.mutate(
-      { host: cleanHost, port: portNumber },
-      { onSuccess: () => setHost("") },
-    );
+    publish.mutate({ host: cleanHost, port: portNumber, protocol }, { onSuccess: () => setHost('') });
   };
 
   return (
     <div className="space-y-6">
       <div className="card">
         <div className="card-header">
-          <h3 className="font-display text-lg font-semibold">
-            Publish a website
-          </h3>
+          <h3 className="font-display text-lg font-semibold">Publish a website</h3>
           <p className="text-surface-400 text-sm mt-1">
-            Make a web server in this VM reachable from the internet over HTTPS.
-            The certificate is issued automatically.
+            Make a web server in this VM reachable from the internet over HTTPS. The certificate is issued
+            automatically.
           </p>
         </div>
         {domains.length === 0 ? (
           <div className="p-4">
             <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">
               <Info className="h-4 w-4 mt-0.5 shrink-0" />
-              Publishing is not enabled for this folder. Ask the admin to allow
-              a domain you own.
+              Publishing is not enabled for this folder. Ask the admin to allow a domain you own.
             </div>
           </div>
         ) : (
@@ -108,43 +85,32 @@ export function PublishTab({
               <li>
                 {data.dns_target ? (
                   <>
-                    At your DNS provider, add a{" "}
-                    <span className="font-mono">CNAME</span> record from the
-                    hostname to{" "}
-                    <span className="font-mono text-surface-100">
-                      {data.dns_target}
-                    </span>
-                    .
+                    At your DNS provider, add a <span className="font-mono">CNAME</span> record from the hostname to{' '}
+                    <span className="font-mono text-surface-100">{data.dns_target}</span>.
                   </>
                 ) : (
-                  <>
-                    At your DNS provider, point the hostname at this platform
-                    (ask the admin for the target).
-                  </>
+                  <>At your DNS provider, point the hostname at this platform (ask the admin for the target).</>
                 )}
               </li>
               <li>
-                Make the web server in the VM listen with plain HTTP on the port
-                below.
+                Run the web server in the VM on the port below, with HTTP or HTTPS. For HTTPS, a self-signed certificate
+                is fine: visitors always get the public certificate.
               </li>
-              <li>
-                Publish. HTTPS works once the certificate is issued, usually
-                within two minutes.
-              </li>
+              <li>Publish. HTTPS works once the certificate is issued, usually within two minutes.</li>
             </ol>
             <p className="text-xs text-surface-500">
-              Allowed: <span className="font-mono">{domains.join(", ")}</span>{" "}
-              and their subdomains.
+              Allowed: <span className="font-mono">{domains.join(', ')}</span> and every subdomain, also several levels
+              deep (e.g. <span className="font-mono">a.b.{domains[0]}</span>).
             </p>
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={host}
                 onChange={(e) => setHost(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handlePublish()}
+                onKeyDown={(e) => e.key === 'Enter' && handlePublish()}
                 placeholder={`www.${domains[0]}`}
                 aria-label="Hostname"
-                className={`input flex-1 font-mono ${hostError ? "border-red-500" : ""}`}
+                className={`input flex-1 font-mono ${hostError ? 'border-red-500' : ''}`}
               />
               <input
                 type="number"
@@ -152,27 +118,26 @@ export function PublishTab({
                 min={1}
                 max={65535}
                 onChange={(e) => setPort(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handlePublish()}
+                onKeyDown={(e) => e.key === 'Enter' && handlePublish()}
                 aria-label="Port"
-                className={`input sm:w-28 ${port && !portValid ? "border-red-500" : ""}`}
+                className={`input sm:w-28 ${port && !portValid ? 'border-red-500' : ''}`}
               />
-              <button
-                onClick={handlePublish}
-                disabled={!canPublish}
-                className="btn-primary"
+              <select
+                value={protocol}
+                onChange={(e) => setProtocol(e.target.value as 'http' | 'https')}
+                aria-label="Protocol in the VM"
+                className="input sm:w-28"
               >
-                {publish.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Globe className="h-4 w-4" />
-                )}
+                <option value="http">HTTP</option>
+                <option value="https">HTTPS</option>
+              </select>
+              <button onClick={handlePublish} disabled={!canPublish} className="btn-primary">
+                {publish.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
                 Publish
               </button>
             </div>
             {hostError && <p className="text-red-400 text-sm">{hostError}</p>}
-            {publish.error && (
-              <p className="text-red-400 text-sm">{publish.error.message}</p>
-            )}
+            {publish.error && <p className="text-red-400 text-sm">{publish.error.message}</p>}
           </div>
         )}
       </div>
@@ -190,10 +155,7 @@ export function PublishTab({
           ) : (
             <div className="divide-y divide-surface-700">
               {data.hosts.map((h) => (
-                <div
-                  key={h.name}
-                  className="px-4 py-3 flex items-center justify-between gap-4"
-                >
+                <div key={h.name} className="px-4 py-3 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <a
@@ -208,12 +170,11 @@ export function PublishTab({
                       <CertificateBadge host={h} />
                     </div>
                     <p className="text-xs text-surface-500 mt-0.5">
-                      to port {h.port} in this VM
+                      to port {h.port} ({h.protocol.toUpperCase()}) in this VM
                     </p>
-                    {h.certificate !== "Ready" && (
+                    {h.certificate !== 'Ready' && (
                       <p className="text-xs text-surface-500">
-                        {h.message ??
-                          "If this stays for more than a few minutes, check the DNS record."}
+                        {h.message ?? 'If this stays for more than a few minutes, check the DNS record.'}
                       </p>
                     )}
                   </div>
@@ -236,11 +197,7 @@ export function PublishTab({
                           <Check className="h-3.5 w-3.5" />
                         )}
                       </button>
-                      <button
-                        onClick={() => setDeleteConfirm(null)}
-                        className="btn-ghost p-1"
-                        title="Cancel"
-                      >
+                      <button onClick={() => setDeleteConfirm(null)} className="btn-ghost p-1" title="Cancel">
                         <X className="h-3.5 w-3.5" />
                       </button>
                     </div>

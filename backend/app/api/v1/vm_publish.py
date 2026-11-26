@@ -8,6 +8,7 @@ annotations and certificates are left to the cluster (admission policies).
 
 import logging
 import re
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from kubernetes_asyncio import client
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 ALLOWED_DOMAINS_ANNOTATION = "kubevirt-ui.io/allowed-domains"
 PUBLISHED_LABEL = "kubevirt-ui.io/published"
 VM_LABEL = "kubevirt-ui.io/vm"
+PROTOCOL_LABEL = "kubevirt-ui.io/backend-protocol"
 
 _HOST = re.compile(r"^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
 
@@ -30,12 +32,14 @@ _HOST = re.compile(r"^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{
 class PublishRequest(BaseModel):
     host: str = Field(..., min_length=1, max_length=253)
     port: int = Field(..., ge=1, le=65535)
+    protocol: Literal["http", "https"] = "http"
 
 
 class PublishedHost(BaseModel):
     name: str
     host: str
     port: int
+    protocol: str
     certificate: str  # Ready, Pending, Failed or Unknown
     message: str | None = None
 
@@ -60,8 +64,9 @@ def ingress_name(vm: str, host: str) -> str:
     return f"{vm}-{host.replace('.', '-')}"[:240].rstrip("-")
 
 
-def service_name(vm: str, port: int) -> str:
-    return f"{vm[:50].rstrip('-')}-p{port}"
+def service_name(vm: str, port: int, protocol: str) -> str:
+    suffix = "-https" if protocol == "https" else ""
+    return f"{vm[:44].rstrip('-')}-p{port}{suffix}"
 
 
 async def _allowed_domains(k8s_client, namespace: str) -> list[str]:
@@ -113,6 +118,7 @@ async def list_published(
         cert, message = await _certificate(namespace, secret, k8s_client)
         hosts.append(PublishedHost(
             name=ing.metadata.name, host=rule.host, port=backend.port.number,
+            protocol=(ing.metadata.labels or {}).get(PROTOCOL_LABEL, "http"),
             certificate=cert, message=message,
         ))
     hosts.sort(key=lambda h: h.host)
@@ -153,8 +159,9 @@ async def publish(
         "apiVersion": "kubevirt.io/v1", "kind": "VirtualMachine",
         "name": name, "uid": vm["metadata"]["uid"],
     }
-    labels = {PUBLISHED_LABEL: "true", VM_LABEL: name}
-    svc_name = service_name(name, body.port)
+    # The cluster turns the protocol label into the ingress controller's backend settings.
+    labels = {PUBLISHED_LABEL: "true", VM_LABEL: name, PROTOCOL_LABEL: body.protocol}
+    svc_name = service_name(name, body.port, body.protocol)
     ing_name = ingress_name(name, host)
 
     service = {
@@ -162,7 +169,7 @@ async def publish(
         "metadata": {"name": svc_name, "labels": labels, "ownerReferences": [owner]},
         "spec": {
             "selector": {"vm.kubevirt.io/name": name},
-            "ports": [{"name": "http", "port": body.port, "targetPort": body.port}],
+            "ports": [{"name": body.protocol, "port": body.port, "targetPort": body.port}],
         },
     }
     ingress = {
@@ -195,8 +202,10 @@ async def publish(
         logger.error(f"Failed to publish {host}: {e}")
         raise HTTPException(status_code=e.status, detail=f"Failed to publish {host}: {e.reason}")
 
-    logger.info(f"{user.username} published {namespace}/{name}:{body.port} as {host}")
-    return PublishedHost(name=ing_name, host=host, port=body.port, certificate="Pending")
+    logger.info(f"{user.username} published {namespace}/{name}:{body.port} ({body.protocol}) as {host}")
+    return PublishedHost(
+        name=ing_name, host=host, port=body.port, protocol=body.protocol, certificate="Pending",
+    )
 
 
 @router.delete("/{name}/published/{ingress}", status_code=status.HTTP_204_NO_CONTENT)

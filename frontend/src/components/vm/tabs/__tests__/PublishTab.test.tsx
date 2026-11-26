@@ -50,13 +50,26 @@ describe('PublishTab', () => {
     await user.clear(screen.getByLabelText('Port'));
     await user.type(screen.getByLabelText('Port'), '8080');
     await user.click(screen.getByRole('button', { name: /Publish/ }));
-    expect(mutate).toHaveBeenCalledWith({ host: 'www.example.com', port: 8080 }, expect.anything());
+    expect(mutate).toHaveBeenCalledWith({ host: 'www.example.com', port: 8080, protocol: 'http' }, expect.anything());
+  });
+
+  it('publishes to an HTTPS server in the VM', async () => {
+    const user = userEvent.setup();
+    render(<PublishTab vm={vm} />);
+    await user.type(screen.getByLabelText('Hostname'), 'example.com');
+    await user.clear(screen.getByLabelText('Port'));
+    await user.type(screen.getByLabelText('Port'), '443');
+    await user.selectOptions(screen.getByLabelText('Protocol in the VM'), 'https');
+    await user.click(screen.getByRole('button', { name: /Publish/ }));
+    expect(mutate).toHaveBeenCalledWith({ host: 'example.com', port: 443, protocol: 'https' }, expect.anything());
   });
 
   it('lists published hosts with their certificate state', () => {
     data = {
       ...data,
-      hosts: [{ name: 'web-www', host: 'www.example.com', port: 80, certificate: 'Pending', message: null }],
+      hosts: [
+        { name: 'web-www', host: 'www.example.com', port: 80, protocol: 'http', certificate: 'Pending', message: null },
+      ],
     };
     render(<PublishTab vm={vm} />);
     expect(screen.getByText('www.example.com')).toBeInTheDocument();

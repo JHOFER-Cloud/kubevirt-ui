@@ -67,9 +67,25 @@ def test_publish_creates_a_service_and_ingress_owned_by_the_vm(
     assert ing["metadata"]["name"] == "web-www-example-com"
     assert ing["spec"]["tls"] == [{"hosts": ["www.example.com"], "secretName": "web-www-example-com-tls"}]
     for obj in (svc, ing):
-        assert obj["metadata"]["labels"] == {"kubevirt-ui.io/published": "true", "kubevirt-ui.io/vm": "web"}
+        assert obj["metadata"]["labels"] == {
+            "kubevirt-ui.io/published": "true", "kubevirt-ui.io/vm": "web",
+            "kubevirt-ui.io/backend-protocol": "http",
+        }
         assert obj["metadata"]["ownerReferences"][0]["uid"] == "vm-uid"
     assert "annotations" not in ing["metadata"]
+
+
+def test_an_https_backend_gets_its_own_service(
+    client: TestClient, net: MagicMock, mock_k8s_client: MagicMock,
+) -> None:
+    r = client.post(URL, json={"host": "foo.org", "port": 443, "protocol": "https"})
+    assert r.status_code == 201, r.text
+    svc = mock_k8s_client.core_api.create_namespaced_service.await_args.args[1]
+    assert svc["metadata"]["name"] == "web-p443-https"
+    assert svc["metadata"]["labels"]["kubevirt-ui.io/backend-protocol"] == "https"
+    assert "annotations" not in svc["metadata"]
+    ing = net.create_namespaced_ingress.await_args.args[1]
+    assert ing["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["name"] == "web-p443-https"
 
 
 def test_a_host_outside_the_allowed_domains_is_refused(
@@ -127,6 +143,6 @@ def test_list_reports_certificate_state(
     body = client.get(URL).json()
     assert body["allowed_domains"] == ["example.com", "foo.org"]
     assert body["hosts"] == [{
-        "name": "web-foo-org", "host": "foo.org", "port": 80,
+        "name": "web-foo-org", "host": "foo.org", "port": 80, "protocol": "http",
         "certificate": "Pending", "message": "Issuing",
     }]
