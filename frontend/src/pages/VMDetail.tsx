@@ -608,12 +608,12 @@ export function VMDetail() {
 
       {/* Tabs */}
       <div className="border-b border-surface-700">
-        <div className="flex gap-1">
+        <div className="flex gap-1 overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors border-b-2 ${
+              className={`flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-3 font-medium transition-colors border-b-2 ${
                 activeTab === tab.id
                   ? 'text-primary-400 border-primary-400'
                   : 'text-surface-400 border-transparent hover:text-surface-200'
