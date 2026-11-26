@@ -8,3 +8,4 @@ export { SnapshotsTab } from './SnapshotsTab';
 export { ScheduleTab } from './ScheduleTab';
 export { CloudInitTab } from './CloudInitTab';
 export { PublishTab } from './PublishTab';
+export { FirewallTab } from './FirewallTab';

@@ -30,17 +30,18 @@ import {
   RefreshCw,
   FileText,
   Globe,
+  ShieldCheck,
 } from 'lucide-react';
 import { useVM, useStartVM, useStopVM, useRestartVM, useMigrateVM, useVMYaml, useUpdateVM, useDeleteVM, useRecreateVM, useCloneVM, useResizeVM, useUpdateVMDisplayName } from '@/hooks/useVMs';
 import { useBreadcrumbOverride } from '@/contexts/BreadcrumbContext';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import VMMetricsPanel from '@/components/charts/VMMetricsPanel';
-import { OverviewTab, ConsoleTab, DisksTab, NetworkTab, EventsTab, YamlTab, SnapshotsTab, ScheduleTab, CloudInitTab, PublishTab } from '@/components/vm/tabs';
+import { OverviewTab, ConsoleTab, DisksTab, NetworkTab, EventsTab, YamlTab, SnapshotsTab, ScheduleTab, CloudInitTab, PublishTab, FirewallTab } from '@/components/vm/tabs';
 import { EditVMModal } from '@/components/vm/EditVMModal';
 import { MigrateVMModal } from '@/components/vm/MigrateVMModal';
 import { ConfirmDeleteModal } from '@/components/common/ConfirmDeleteModal';
 
-type TabId = 'overview' | 'monitoring' | 'console' | 'disks' | 'snapshots' | 'network' | 'publish' | 'schedule' | 'cloud-init' | 'events' | 'yaml';
+type TabId = 'overview' | 'monitoring' | 'console' | 'disks' | 'snapshots' | 'network' | 'firewall' | 'publish' | 'schedule' | 'cloud-init' | 'events' | 'yaml';
 
 const tabs: { id: TabId; label: string; icon: typeof Activity }[] = [
   { id: 'overview', label: 'Overview', icon: Activity },
@@ -49,6 +50,7 @@ const tabs: { id: TabId; label: string; icon: typeof Activity }[] = [
   { id: 'disks', label: 'Disks', icon: HardDrive },
   { id: 'snapshots', label: 'Snapshots', icon: Camera },
   { id: 'network', label: 'Network', icon: Network },
+  { id: 'firewall', label: 'Firewall', icon: ShieldCheck },
   { id: 'publish', label: 'Publish', icon: Globe },
   { id: 'schedule', label: 'Schedule', icon: CalendarClock },
   { id: 'cloud-init', label: 'Cloud-init', icon: FileText },
@@ -696,6 +698,10 @@ export function VMDetail() {
         
         {activeTab === 'network' && (
           <NetworkTab vm={vm} />
+        )}
+
+        {activeTab === 'firewall' && (
+          <FirewallTab vm={vm} />
         )}
 
         {activeTab === 'publish' && (
