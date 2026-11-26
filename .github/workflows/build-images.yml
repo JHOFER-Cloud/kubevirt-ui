@@ -206,6 +206,12 @@ jobs:
         with:
           version: v3.16.3
 
+      # Same as the image (python:3.12-slim); the runner's default moves ahead of the pins.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Operator suite
         working-directory: operator
         # `make test` brings its own envtest binaries, so the controller suite —
