@@ -38,6 +38,7 @@ from app.api.v1.vm_disks import router as vm_disks_router
 from app.api.v1.vm_network import router as vm_network_router
 from app.api.v1.velero_backups import router as velero_backups_router
 from app.api.v1.vm_snapshots import router as vm_snapshots_router
+from app.api.v1.vm_publish import router as vm_publish_router
 from app.api.v1.ldap import router as ldap_router
 
 router = APIRouter()
@@ -135,6 +136,7 @@ protected.include_router(vm_disks_router, prefix="/namespaces/{namespace}/vms", 
 router.include_router(vm_console_router, prefix="/namespaces/{namespace}/vms", tags=["VM Console"])
 protected.include_router(vm_snapshots_router, prefix="/namespaces/{namespace}/vms", tags=["VM Snapshots"])
 protected.include_router(vm_network_router, prefix="/namespaces/{namespace}/vms", tags=["VM Network"])
+protected.include_router(vm_publish_router, prefix="/namespaces/{namespace}/vms", tags=["VM Publish"])
 protected.include_router(storage_router, prefix="/namespaces/{namespace}/storage", tags=["Storage"])
 protected.include_router(disks_router, prefix="/namespaces/{namespace}/disks", tags=["Persistent Disks"])
 protected.include_router(snapshots_router, prefix="/namespaces/{namespace}/snapshots", tags=["Volume Snapshots"])

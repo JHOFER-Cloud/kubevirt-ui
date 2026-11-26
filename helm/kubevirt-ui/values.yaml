@@ -35,6 +35,9 @@ backend:
     # -- Show CLI Access (per-user ServiceAccount kubeconfigs). Set "false" when
     # the backend may not create ServiceAccounts or users should not reach the API.
     CLI_ACCESS_ENABLED: "true"
+    # -- CNAME target shown on a VM's Publish tab. Which hosts a namespace may
+    # publish is its kubevirt-ui.io/allowed-domains annotation.
+    PUBLISH_DNS_TARGET: ""
     # -- Route golden-image creation through the operator: the backend writes a
     # ManagedImage custom resource and the operator creates the DataVolume, the
     # DataSource and the status. Empty/false → the backend creates the

@@ -38,6 +38,8 @@ class Settings(BaseSettings):
 
     # Off where users may not get a ServiceAccount (and so no kubeconfig)
     cli_access_enabled: bool = True
+    # Shown on the Publish tab as the CNAME target for a published host.
+    publish_dns_target: str = ""
 
     # Auth — comma-separated list of group names whose members are KubeVirt UI
     # admins (full cluster-wide access). Set this via ADMIN_GROUPS env var to
